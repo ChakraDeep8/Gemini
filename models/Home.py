@@ -76,34 +76,34 @@ def show_home():
             output_text = "No response generated."
 
         return output_text
-    def main():
-        st.set_page_config(page_title="Chatty The ChatBot", page_icon="🤖")
 
-        # Main content area for displaying chat messages
-        st.title("Chat with Generative AI 🤖")
-        st.write("Welcome to the chat!")
-        st.sidebar.button('Clear Chat History', on_click=clear_chat_history)
+    #st.set_page_config(page_title="Chatty The ChatBot", page_icon="🤖")
 
-        # Display chat messages and bot response
-        if "messages" not in st.session_state.keys():
-            st.session_state.messages = []
+    # Main content area for displaying chat messages
+    st.title("Chat with Generative AI 🤖")
+    st.write("Welcome to the chat!")
+    st.sidebar.button('Clear Chat History', on_click=clear_chat_history)
 
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.write(message["content"])
+    # Display chat messages and bot response
+    if "messages" not in st.session_state.keys():
+        st.session_state.messages = []
 
-        if prompt := st.chat_input("Chat with Chatty"):
-            st.session_state.messages.append({"role": "user", "content": prompt})
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.write(message["content"])
 
-        if st.session_state.messages:
-            prompt = st.session_state.messages[-1]["content"]
-            if prompt:
-                with st.spinner("Thinking..."):
-                    response = user_input(prompt)
-                    if response is not None:
-                        st.session_state.messages.append({"role": "assistant", "content": response})
-                        with st.chat_message("assistant"):
-                            st.write(response)
+    if prompt := st.chat_input("Chat with Chatty"):
+        st.session_state.messages.append({"role": "user", "content": prompt})
 
-    if __name__ == "__main__":
-        main()
+    if st.session_state.messages:
+        prompt = st.session_state.messages[-1]["content"]
+        if prompt:
+            with st.spinner("Thinking..."):
+                response = user_input(prompt)
+                if response is not None:
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                    with st.chat_message("assistant"):
+                        st.write(response)
+
+
+

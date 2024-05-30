@@ -69,49 +69,47 @@ def show_user_pdf():
         response = chain({"input_documents": docs, "question": user_question}, return_only_outputs=True)
         return response
 
-    def main():
-        st.set_page_config(page_title="Gemini PDF Chatbot", page_icon="🤖")
+    #st.set_page_config(page_title="Gemini PDF Chatbot", page_icon="🤖")
 
-        # Sidebar for uploading PDF files
-        with st.sidebar:
-            st.title("Menu:")
-            pdf_docs = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button",
-                                        accept_multiple_files=True)
-            if st.button("Submit & Process"):
-                with st.spinner("Processing..."):
-                    raw_text = get_pdf_text(pdf_docs)
-                    text_chunks = get_text_chunks(raw_text)
-                    get_vector_store(text_chunks)
-                    st.success("Done")
+    # Sidebar for uploading PDF files
+    with st.sidebar:
+        st.title("Menu:")
+        pdf_docs = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button",
+                                    accept_multiple_files=True)
+        if st.button("Submit & Process"):
+            with st.spinner("Processing..."):
+                raw_text = get_pdf_text(pdf_docs)
+                text_chunks = get_text_chunks(raw_text)
+                get_vector_store(text_chunks)
+                st.success("Done")
 
-        # Main content area for displaying chat messages
-        st.title("Chat with PDF files using Gemini🤖")
-        st.write("Welcome to the chat!")
-        st.sidebar.button('Clear Chat History', on_click=clear_chat_history)
+    # Main content area for displaying chat messages
+    st.title("Chat with PDF files using Gemini🤖")
+    st.write("Welcome to the chat!")
+    st.sidebar.button('Clear Chat History', on_click=clear_chat_history)
 
-        # Display chat messages and bot response
-        if "messages" not in st.session_state.keys():
-            st.session_state.messages = []
+    # Display chat messages and bot response
+    if "messages" not in st.session_state.keys():
+        st.session_state.messages = []
 
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.write(message["content"])
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.write(message["content"])
 
-        if prompt := st.chat_input():
-            st.session_state.messages.append({"role": "user", "content": prompt})
+    if prompt := st.chat_input():
+        st.session_state.messages.append({"role": "user", "content": prompt})
 
-        if st.session_state.messages:
-            prompt = st.session_state.messages[-1]["content"]
-            if prompt:
-                with st.spinner("Thinking..."):
-                    response = user_input(prompt)
-                    if response is not None:
-                        full_response = ''.join(response['output_text'])
-                        st.session_state.messages.append({"role": "assistant", "content": full_response})
-                        with st.chat_message("assistant"):
-                            st.write(full_response)
+    if st.session_state.messages:
+        prompt = st.session_state.messages[-1]["content"]
+        if prompt:
+            with st.spinner("Thinking..."):
+                response = user_input(prompt)
+                if response is not None:
+                    full_response = ''.join(response['output_text'])
+                    st.session_state.messages.append({"role": "assistant", "content": full_response})
+                    with st.chat_message("assistant"):
+                        st.write(full_response)
 
-    if __name__ == "__main__":
-        main()
+
 
 

@@ -81,48 +81,46 @@ def show_text2img():
             with st.chat_message("assistant"):
                 st.write(error_msg)
 
-    def main():
-        st.set_page_config(page_title="Chatty The ChatBot", page_icon="🤖")
+    # st.set_page_config(page_title="Chatty The ChatBot", page_icon="🤖")
 
-        st.title("Generate Image From Text🖼️")
-        st.write("Welcome to the chat!")
-        st.sidebar.button('Clear Chat History', on_click=clear_chat_history)
+    st.title("Generate Image From Text🖼️")
+    st.write("Welcome to the chat!")
+    st.sidebar.button('Clear Chat History', on_click=clear_chat_history)
 
-        use_prompt_generation = st.sidebar.checkbox('Generate Prompts for Image', value=False)
+    use_prompt_generation = st.sidebar.checkbox('Generate Prompts for Image', value=False)
 
-        if "messages" not in st.session_state:
-            st.session_state.messages = []
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
 
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.write(message["content"])
-                if "image" in message:
-                    st.image(message["image"], caption=message["prompt"], use_column_width=True)
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.write(message["content"])
+            if "image" in message:
+                st.image(message["image"], caption=message["prompt"], use_column_width=True)
 
-        prompt = st.chat_input("Write your imagination")
+    prompt = st.chat_input("Write your imagination")
 
-        if prompt:
-            st.session_state.messages.append({"role": "user", "content": prompt})
+    if prompt:
+        st.session_state.messages.append({"role": "user", "content": prompt})
 
-            if use_prompt_generation:
-                descriptive_prompt = generate_prompt(prompt)
-                st.session_state["generated_prompt"] = descriptive_prompt
-                st.session_state.messages.append(
-                    {"role": "assistant", "content": f"Generated prompt: {descriptive_prompt}"})
-                with st.chat_message("assistant"):
-                    st.write(f"Generated prompt: {descriptive_prompt}")
+        if use_prompt_generation:
+            descriptive_prompt = generate_prompt(prompt)
+            st.session_state["generated_prompt"] = descriptive_prompt
+            st.session_state.messages.append(
+                {"role": "assistant", "content": f"Generated prompt: {descriptive_prompt}"})
+            with st.chat_message("assistant"):
+                st.write(f"Generated prompt: {descriptive_prompt}")
 
-            else:
-                image_generation(prompt)
+        else:
+            image_generation(prompt)
 
-        if use_prompt_generation and st.button('Generate Image'):
-            generated_prompt = st.session_state.get("generated_prompt", "")
-            if generated_prompt:
-                image_generation(generated_prompt)
-            else:
-                st.warning("No prompt generated. Please enter input and generate a prompt first.")
+    if use_prompt_generation and st.button('Generate Image'):
+        generated_prompt = st.session_state.get("generated_prompt", "")
+        if generated_prompt:
+            image_generation(generated_prompt)
+        else:
+            st.warning("No prompt generated. Please enter input and generate a prompt first.")
 
-    if __name__ == "__main__":
-        main()
+
 
 

@@ -1,54 +1,68 @@
-import os
-
 import streamlit as st
-from streamlit_navigation_bar import st_navbar
+from streamlit_option_menu import option_menu
+from models import  Home, ImageChat, Text2Image, PdfChat
 
-from pages import Home, ImageChat, Text2Image, PdfChat
 
-st.set_page_config(initial_sidebar_state="collapsed")
+# 1=sidebar menu, 2=horizontal menu, 3=horizontal menu w/ custom menu
+EXAMPLE_NO = 2
 
-pages = ["Home", "ImageChat", "PdfChat", "Text2Image"]
-parent_dir = os.path.dirname(os.path.abspath(__file__))
-# logo_path = os.path.join(parent_dir, "cubes.svg")
-urls = {"GitHub": st.secrets["github"]}
-styles = {
-    "nav": {
-        "background-color": "royalblue",
-        "justify-content": "left",
-    },
-    "img": {
-        "padding-right": "14px",
-    },
-    "span": {
-        "color": "white",
-        "padding": "14px",
-    },
-    "active": {
-        "background-color": "white",
-        "color": "var(--text-color)",
-        "font-weight": "normal",
-        "padding": "14px",
-    }
-}
-options = {
-    "show_menu": False,
-    "show_sidebar": False,
-}
 
-page = st_navbar(
-    pages,
-    # logo_path=logo_path,
-    urls=urls,
-    styles=styles,
-    options=options,
-)
+def streamlit_menu(example=1):
+    if example == 1:
+        # 1. as sidebar menu
+        with st.sidebar:
+            selected = option_menu(
+                menu_title="Main Menu",  # required
+                options=["Home", "ImageChat", "PdfChat", "Text2Image"],  # required
+                icons=["chat", "camera", "book","shuffle"],  # optional
+                menu_icon="cast",  # optional
+                default_index=0,  # optional
+            )
+        return selected
 
-functions = {
-    "Home": Home.show_home,
-    "ImageChat": ImageChat.show_image,
-    "PdfChat": PdfChat.show_user_pdf,
-    "Text2Image": Text2Image.show_text2img,
-}
-go_to = functions.get(page)
-if go_to:
-    go_to()
+    if example == 2:
+        # 2. horizontal menu w/o custom style
+        selected = option_menu(
+            menu_title=None,  # required
+            options=["Home", "ImageChat", "PdfChat", "Text2Image"],  # required
+            icons=["chat", "camera", "book", "shuffle"],  # optional
+            menu_icon="cast",  # optional
+            default_index=0,  # optional
+            orientation="horizontal",
+        )
+        return selected
+
+    if example == 3:
+        # 2. horizontal menu with custom style
+        selected = option_menu(
+            menu_title=None,  # required
+            options=["Home", "ImageChat", "PdfChat", "Text2Image"],  # required
+            icons=["chat", "camera", "book", "shuffle"],  # optional
+            menu_icon="cast",  # optional
+            default_index=0,  # optional
+            orientation="horizontal",
+            styles={
+                "container": {"padding": "0!important", "background-color": "#fafafa"},
+                "icon": {"color": "orange", "font-size": "25px"},
+                "nav-link": {
+                    "font-size": "25px",
+                    "text-align": "left",
+                    "margin": "0px",
+                    "--hover-color": "#eee",
+                },
+                "nav-link-selected": {"background-color": "green"},
+            },
+        )
+        return selected
+
+
+selected = streamlit_menu(example=EXAMPLE_NO)
+
+if selected == "Home":
+    Home.show_home()
+if selected == "Text2Image":
+    Text2Image.show_text2img()
+if selected == "PdfChat":
+    PdfChat.show_user_pdf()
+if selected == "ImageChat":
+    ImageChat.show_image()
