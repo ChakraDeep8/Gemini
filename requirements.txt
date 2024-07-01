@@ -26,7 +26,6 @@ st_pages
 transformers~=4.39.3
 python-dotenv
 requests
-torch~=2.2.1
 soundfile~=0.12.1
 datasets~=2.18.0
 SentencePiece-0.2.0
