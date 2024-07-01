@@ -33,7 +33,7 @@ SentencePiece
 sounddevice~=0.4.6
 accelerate
 diffusers
-huggingface-hub-0.23.4
+huggingface-hub
 safetensors
 pytorch
 torchvision
