@@ -1,3 +1,4 @@
+torch
 google-generativeai
 streamlit
 python-dotenv
@@ -35,4 +36,4 @@ accelerate
 diffusers-0.29.2
 huggingface_hub-0.23.4
 safetensors
-torch
+
