@@ -32,7 +32,7 @@ datasets~=2.18.0
 SentencePiece
 sounddevice~=0.4.6
 accelerate
-diffusers-0.29.2
+diffusers
 huggingface-hub-0.23.4
 safetensors
 pytorch
