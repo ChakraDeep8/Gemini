@@ -28,7 +28,7 @@ python-dotenv
 requests
 soundfile~=0.12.1
 datasets~=2.18.0
-SentencePiece-0.2.0
+SentencePiece
 sounddevice~=0.4.6
 huggingfacehub
 accelerate
