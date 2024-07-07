@@ -1,20 +1,21 @@
-def gemini_image_chat():
-    import os
-    import joblib
-    import streamlit as st
-    from PIL import Image
-    import google.generativeai as genai
-    from dotenv import load_dotenv
-    from datetime import datetime
+import os
+import joblib
+import streamlit as st
+from PIL import Image
+import google.generativeai as genai
+from dotenv import load_dotenv
+from datetime import datetime
 
+
+def gemini_image_chat():
     load_dotenv()
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
     # Function to get response from the Gemini model
-    def get_gemini_response(input_text, image):
+    def get_gemini_response(user_input, image):
         model = genai.GenerativeModel('gemini-pro-vision')
-        if input_text:
-            response = model.generate_content([input_text, image])
+        if user_input:
+            response = model.generate_content([user_input, image])
         else:
             response = model.generate_content(image)
         return response.text
@@ -23,15 +24,20 @@ def gemini_image_chat():
     MODEL_ROLE = 'ai'
     AI_AVATAR_ICON = '✨'
 
+    # Define the data directory
+    data_dir = 'data'
+    images_dir = os.path.join(data_dir, 'images')
+
     # Create data/ and data/images/ folders if they don't already exist
-    if not os.path.exists('data/'):
-        os.makedirs('data/')
-    if not os.path.exists('data/images/'):
-        os.makedirs('data/images/')
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+    if not os.path.exists(images_dir):
+        os.makedirs(images_dir)
 
     # Load past chats (if available)
+    past_chats_file = os.path.join(data_dir, 'past_chats_list')
     try:
-        past_chats = joblib.load('data/past_chats_list')
+        past_chats = joblib.load(past_chats_file)
     except FileNotFoundError:
         past_chats = {}
 
@@ -46,7 +52,7 @@ def gemini_image_chat():
             st.session_state.messages = []
             st.session_state.gemini_history = []
             past_chats[st.session_state.current_time] = st.session_state.chat_title
-            joblib.dump(past_chats, 'data/past_chats_list')
+            joblib.dump(past_chats, past_chats_file)
             st.experimental_rerun()
 
         # Display past chats as a dropdown
@@ -71,17 +77,18 @@ def gemini_image_chat():
         st.session_state.chat_title = f'ChatSession-{st.session_state.current_time}'
 
         # Buttons to clear chat history and delete all chats in one row
-        # Buttons to clear chat history and delete all chats in one row
         col1, col2 = st.columns(2)
         with col1:
             if st.button('Delete this Chat'):
                 if st.session_state.current_time in past_chats:
                     del past_chats[st.session_state.current_time]
-                    joblib.dump(past_chats, 'data/past_chats_list')
-                if os.path.exists(f'data/{st.session_state.current_time}-st_messages'):
-                    os.remove(f'data/{st.session_state.current_time}-st_messages')
-                if os.path.exists(f'data/{st.session_state.current_time}-gemini_messages'):
-                    os.remove(f'data/{st.session_state.current_time}-gemini_messages')
+                    joblib.dump(past_chats, past_chats_file)
+                st_messages_file = os.path.join(data_dir, f'{st.session_state.current_time}-st_messages')
+                gemini_messages_file = os.path.join(data_dir, f'{st.session_state.current_time}-gemini_messages')
+                if os.path.exists(st_messages_file):
+                    os.remove(st_messages_file)
+                if os.path.exists(gemini_messages_file):
+                    os.remove(gemini_messages_file)
                 st.session_state.messages = []
                 st.session_state.gemini_history = []
                 st.session_state.current_time = None
@@ -90,12 +97,14 @@ def gemini_image_chat():
         with col2:
             if st.button('Delete All Chats'):
                 for chat_id in list(past_chats.keys()):
-                    if os.path.exists(f'data/{chat_id}-st_messages'):
-                        os.remove(f'data/{chat_id}-st_messages')
-                    if os.path.exists(f'data/{chat_id}-gemini_messages'):
-                        os.remove(f'data/{chat_id}-gemini_messages')
+                    st_messages_file = os.path.join(data_dir, f'{chat_id}-st_messages')
+                    gemini_messages_file = os.path.join(data_dir, f'{chat_id}-gemini_messages')
+                    if os.path.exists(st_messages_file):
+                        os.remove(st_messages_file)
+                    if os.path.exists(gemini_messages_file):
+                        os.remove(gemini_messages_file)
                 past_chats.clear()
-                joblib.dump(past_chats, 'data/past_chats_list')
+                joblib.dump(past_chats, past_chats_file)
                 st.session_state.messages = []
                 st.session_state.gemini_history = []
                 st.session_state.current_time = None
@@ -106,10 +115,10 @@ def gemini_image_chat():
     # Load chat history if available
     try:
         st.session_state.messages = joblib.load(
-            f'data/{st.session_state.current_time}-st_messages'
+            os.path.join(data_dir, f'{st.session_state.current_time}-st_messages')
         )
         st.session_state.gemini_history = joblib.load(
-            f'data/{st.session_state.current_time}-gemini_messages'
+            os.path.join(data_dir, f'{st.session_state.current_time}-gemini_messages')
         )
     except FileNotFoundError:
         st.session_state.messages = []
@@ -140,13 +149,12 @@ def gemini_image_chat():
                 image = image.convert("RGB")
             st.image(image, caption="Uploaded Image.", use_column_width=True)
             file_extension = image.format.lower() if image.format else 'jpg'
-            image_path = f'data/images/{st.session_state.current_time}-image.{file_extension}'
+            image_path = os.path.join(images_dir, f'{st.session_state.current_time}-image.{file_extension}')
             image.save(image_path)
 
         submit = st.button("Tell me about the image")
 
     # Generate response when submit button is clicked
-
     if submit and (input_text or image):
         if image and not input_text:
             input_text = "No prompt provided."
@@ -176,11 +184,11 @@ def gemini_image_chat():
         # Save chat history to files
         joblib.dump(
             st.session_state.messages,
-            f'data/{st.session_state.current_time}-st_messages',
+            os.path.join(data_dir, f'{st.session_state.current_time}-st_messages'),
         )
         joblib.dump(
             st.session_state.gemini_history,
-            f'data/{st.session_state.current_time}-gemini_messages',
+            os.path.join(data_dir, f'{st.session_state.current_time}-gemini_messages'),
         )
     elif input_text and image:
         response = get_gemini_response(input_text, image)
@@ -207,9 +215,9 @@ def gemini_image_chat():
         # Save chat history to files
         joblib.dump(
             st.session_state.messages,
-            f'data/{st.session_state.current_time}-st_messages',
+            os.path.join(data_dir, f'{st.session_state.current_time}-st_messages'),
         )
         joblib.dump(
             st.session_state.gemini_history,
-            f'data/{st.session_state.current_time}-gemini_messages',
+            os.path.join(data_dir, f'{st.session_state.current_time}-gemini_messages'),
         )
