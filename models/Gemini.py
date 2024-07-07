@@ -22,7 +22,7 @@ def gemini_chat():
 
     # Load past chats (if available)
     try:
-        past_chats = joblib.load('../data/past_chats_list')
+        past_chats = joblib.load('Streamlit/data/past_chats_list')
     except FileNotFoundError:
         past_chats = {}
 
