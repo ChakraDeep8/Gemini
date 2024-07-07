@@ -9,3 +9,5 @@ faiss-cpu
 langchain_google_genai
 streamlit-option-menu
 joblib
+langchain-community
+langchain-core
