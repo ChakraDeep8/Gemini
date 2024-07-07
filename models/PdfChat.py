@@ -1,16 +1,17 @@
-def gemini_pdf_chat():
-    import streamlit as st
-    from PyPDF2 import PdfReader
-    from langchain.text_splitter import RecursiveCharacterTextSplitter
-    from langchain_google_genai import GoogleGenerativeAIEmbeddings
-    import google.generativeai as genai
-    from langchain_community.vectorstores import FAISS
-    from langchain_google_genai import ChatGoogleGenerativeAI
-    from langchain.chains.question_answering import load_qa_chain
-    from langchain.prompts import PromptTemplate
-    from dotenv import load_dotenv
-    import asyncio
+import os
+import streamlit as st
+from PyPDF2 import PdfReader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+import google.generativeai as genai
+from langchain_community.vectorstores import FAISS
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain.chains.question_answering import load_qa_chain
+from langchain.prompts import PromptTemplate
+from dotenv import load_dotenv
+import asyncio
 
+def gemini_pdf_chat():
     load_dotenv()
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
@@ -53,8 +54,7 @@ def gemini_pdf_chat():
         Answer:
         """
 
-        model = ChatGoogleGenerativeAI(model="gemini-pro",
-                                       temperature=0.3)
+        model = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0.3)
 
         prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
         chain = load_qa_chain(model, chain_type="stuff", prompt=prompt)
@@ -73,8 +73,8 @@ def gemini_pdf_chat():
             {"input_documents": docs, "question": user_question}
             , return_only_outputs=True)
 
-        print(response)
         st.write("Reply: ", response["output_text"])
+
     st.header("Chat with PDF using Gemini📚")
 
     user_question = st.text_input("Ask a Question from the PDF Files")
@@ -92,4 +92,3 @@ def gemini_pdf_chat():
                 text_chunks = get_text_chunks(raw_text)
                 get_vector_store(text_chunks)
                 st.success("Done")
-
