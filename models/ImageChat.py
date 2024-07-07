@@ -124,16 +124,16 @@ def gemini_image_chat():
         st.session_state.messages = []
         st.session_state.gemini_history = []
 
-    # Display chat messages from history on app rerun
-    for message in st.session_state.messages:
-        with st.chat_message(
-                name=message['role'],
-                avatar=message.get('avatar'),
-        ):
-            st.markdown(message['content'])
-            if 'image_path' in message:
-                image = Image.open(message['image_path'])
-                st.image(image, caption="Uploaded Image.", use_column_width=True)
+    # # Display chat messages from history on app rerun
+    # for message in st.session_state.messages:
+    #     with st.chat_message(
+    #             name=message['role'],
+    #             avatar=message.get('avatar'),
+    #     ):
+    #         st.markdown(message['content'])
+    #         if 'image_path' in message:
+    #             image = Image.open(message['image_path'])
+    #             st.image(image, caption="Uploaded Image.", use_column_width=True)
 
     # Input prompt
     input_text = st.chat_input("Input Prompt:", key="input_text")
@@ -192,7 +192,7 @@ def gemini_image_chat():
         )
     elif input_text and image:
         response = get_gemini_response(input_text, image)
-        #st.write(response)
+        st.write(response)
         # Add user message and response to chat history
         st.session_state.messages.append(
             dict(
