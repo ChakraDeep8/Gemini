@@ -1,94 +1,182 @@
+import os
+import joblib
 import streamlit as st
-from PyPDF2 import PdfReader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
 import google.generativeai as genai
-from langchain.vectorstores import FAISS
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.chains.question_answering import load_qa_chain
-from langchain.prompts import PromptTemplate
-
-
+from dotenv import load_dotenv
+import time
+from datetime import datetime
+st.set_page_config(page_title="All in one Gemini", page_icon="🤖")
+load_dotenv()
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
+current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+MODEL_ROLE = 'ai'
+AI_AVATAR_ICON = '✨'
 
-def get_pdf_text(pdf_docs):
-    text = ""
-    for pdf in pdf_docs:
-        pdf_reader = PdfReader(pdf)
-        for page in pdf_reader.pages:
-            text += page.extract_text()
-    return text
+# Create a data/ folder if it doesn't already exist
+try:
+    os.mkdir('data/')
+except FileExistsError:
+    pass
 
+# Load past chats (if available)
+try:
+    past_chats = joblib.load('data/past_chats_list')
+except FileNotFoundError:
+    past_chats = {}
 
-def get_text_chunks(text):
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=10000, chunk_overlap=1000)
-    chunks = text_splitter.split_text(text)
-    return chunks
+# Sidebar allows a list of past chats and new chat button
+with st.sidebar:
+    st.write('# Previous Chats 👇')
 
+    # Handle "New Chat" button separately
+    if st.button('New Chat'):
+        st.session_state.current_time = current_time
+        st.session_state.chat_title = f'ChatSession-{st.session_state.current_time}'
+        st.session_state.messages = []
+        st.session_state.gemini_history = []
+        st.session_state.model = genai.GenerativeModel('gemini-pro')
+        st.session_state.chat = st.session_state.model.start_chat(
+            history=st.session_state.gemini_history,
+        )
+        past_chats[st.session_state.current_time] = st.session_state.chat_title
+        joblib.dump(past_chats, 'data/past_chats_list')
 
-def get_vector_store(text_chunks):
-    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-    vector_store = FAISS.from_texts(text_chunks, embedding=embeddings)
-    return vector_store
+    # Display past chats as a dropdown
+    if st.session_state.get('current_time') is None:
+        st.session_state.current_time = st.selectbox(
+            label='Chat History',
+            options=list(past_chats.keys()),
+            format_func=lambda x: past_chats.get(x, 'New Chat'),
+            placeholder='Select or click "New Chat"',
+        )
+    else:
+        st.session_state.current_time = st.selectbox(
+            label='Pick a past chat',
+            options=[st.session_state.current_time] + list(past_chats.keys()),
+            format_func=lambda x: past_chats.get(x,
+                                                 'New Chat' if x != st.session_state.current_time else st.session_state.chat_title),
+            placeholder='Select or click "New Chat"',
+        )
+        st.markdown(f"Selected: {st.session_state.current_time}")
 
+    # Save selected chat title
+    st.session_state.chat_title = f'ChatSession-{st.session_state.current_time}'
 
-def get_conversational_chain():
-    prompt_template = """
-    Answer the question as detailed as possible from the provided context, make sure to provide all the details, if the answer is not in
-    provided context just say, "answer is not available in the context", don't provide the wrong answer\n\n
-    Context:\n {context}?\n
-    Question: \n{question}\n
+    # Buttons to clear chat history and delete all chats
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button('Delete this Chat'):
+            if st.session_state.current_time in past_chats:
+                del past_chats[st.session_state.current_time]
+                joblib.dump(past_chats, 'data/past_chats_list')
+            if os.path.exists(f'data/{st.session_state.current_time}-st_messages'):
+                os.remove(f'data/{st.session_state.current_time}-st_messages')
+            if os.path.exists(f'data/{st.session_state.current_time}-gemini_messages'):
+                os.remove(f'data/{st.session_state.current_time}-gemini_messages')
+            st.session_state.messages = []
+            st.session_state.gemini_history = []
+            st.session_state.current_time = None
+            st.experimental_rerun()
 
-    Answer:
-    """
+    with col2:
+        if st.button('Delete All Chats'):
+            for chat_id in past_chats.keys():
+                if os.path.exists(f'data/{chat_id}-st_messages'):
+                    os.remove(f'data/{chat_id}-st_messages')
+                if os.path.exists(f'data/{chat_id}-gemini_messages'):
+                    os.remove(f'data/{chat_id}-gemini_messages')
+            past_chats.clear()
+            joblib.dump(past_chats, 'data/past_chats_list')
+            st.session_state.messages = []
+            st.session_state.gemini_history = []
+            st.session_state.current_time = None
+            st.experimental_rerun()
 
-    model = ChatGoogleGenerativeAI(model="gemini-pro",
-                                   temperature=0.3)
+st.write('# Chat with Gemini')
 
-    prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
-    chain = load_qa_chain(model, chain_type="stuff", prompt=prompt)
+# Load chat history if available
+try:
+    st.session_state.messages = joblib.load(
+        f'data/{st.session_state.current_time}-st_messages'
+    )
+    st.session_state.gemini_history = joblib.load(
+        f'data/{st.session_state.current_time}-gemini_messages'
+    )
+except FileNotFoundError:
+    st.session_state.messages = []
+    st.session_state.gemini_history = []
 
-    return chain
+# Initialize Gemini model and chat session
+if 'model' not in st.session_state:
+    st.session_state.model = genai.GenerativeModel('gemini-pro')
+    st.session_state.chat = st.session_state.model.start_chat(
+        history=st.session_state.gemini_history,
+    )
 
+# Display chat messages from history on app rerun
+for message in st.session_state.messages:
+    with st.chat_message(
+            name=message['role'],
+            avatar=message.get('avatar'),
+    ):
+        st.markdown(message['content'])
 
-def user_input(user_question):
-    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+# React to user input
+if prompt := st.chat_input('Your message here...'):
+    # Display user message in chat message container
+    with st.chat_message('user'):
+        st.markdown(prompt)
 
-    new_db = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
-    docs = new_db.similarity_search(user_question)
+    # Add user message to chat history
+    st.session_state.messages.append(
+        dict(
+            role='user',
+            content=prompt,
+        )
+    )
 
-    chain = get_conversational_chain()
+    # Send message to AI
+    response = st.session_state.chat.send_message(
+        prompt,
+        stream=True,
+    )
 
-    response = chain(
-        {"input_documents": docs, "question": user_question}
-        , return_only_outputs=True)
+    # Display assistant response in chat message container
+    with st.chat_message(
+            name=MODEL_ROLE,
+            avatar=AI_AVATAR_ICON,
+    ):
+        message_placeholder = st.empty()
+        full_response = ''
+        assistant_response = response
 
-    print(response)
-    st.write("Reply: ", response["output_text"])
+        # Streams in a chunk at a time
+        for chunk in response:
+            for ch in chunk.text.split(' '):
+                full_response += ch + ' '
+                time.sleep(0.05)
+                message_placeholder.write(full_response + '▌')
 
+        # Write full message with placeholder
+        message_placeholder.write(full_response)
 
-def main():
-    st.set_page_config("Chat PDF")
-    st.header("Chat with PDF using Gemini💁")
+    # Add assistant response to chat history
+    st.session_state.messages.append(
+        dict(
+            role=MODEL_ROLE,
+            content=st.session_state.chat.history[-1].parts[0].text,
+            avatar=AI_AVATAR_ICON,
+        )
+    )
+    st.session_state.gemini_history = st.session_state.chat.history
 
-    user_question = st.text_input("Ask a Question from the PDF Files")
-
-    if user_question:
-        user_input(user_question)
-
-    with st.sidebar:
-        st.title("Menu:")
-        pdf_docs = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button",
-                                    accept_multiple_files=True)
-        if st.button("Submit & Process"):
-            with st.spinner("Processing..."):
-                raw_text = get_pdf_text(pdf_docs)
-                text_chunks = get_text_chunks(raw_text)
-                new_db = get_vector_store(text_chunks)  # Regenerate index here
-                new_db.save_local("faiss_index")
-                st.success("Done")
-
-
-if __name__ == "__main__":
-    main()
+    # Save chat history to files
+    joblib.dump(
+        st.session_state.messages,
+        f'data/{st.session_state.current_time}-st_messages',
+    )
+    joblib.dump(
+        st.session_state.gemini_history,
+        f'data/{st.session_state.current_time}-gemini_messages',
+    )
