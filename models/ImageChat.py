@@ -192,7 +192,7 @@ def gemini_image_chat():
         )
     elif input_text and image:
         response = get_gemini_response(input_text, image)
-        st.write(response)
+        #st.write(response)
         # Add user message and response to chat history
         st.session_state.messages.append(
             dict(
