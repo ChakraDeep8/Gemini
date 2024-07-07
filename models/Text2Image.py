@@ -43,7 +43,7 @@ def gemini_text2image():
         )
 
         structured_prompt = (
-            f"Create an artistic and visually appealing image based on the following concept: {user_input}.",
+            f"Create a visually appealing image based of {user_input}.",
             st.secrets["prompt"]
         )
 
