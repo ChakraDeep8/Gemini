@@ -39,7 +39,7 @@ def gemini_chat():
                 history=st.session_state.gemini_history,
             )
             past_chats[st.session_state.current_time] = st.session_state.chat_title
-            joblib.dump(past_chats, '../data/past_chats_list')
+            joblib.dump(past_chats, 'Streamlit/data/past_chats_list')
         st.write('# Previous Chats 👇')
         # Display past chats as a dropdown
         if st.session_state.get('current_time') is None:
@@ -68,7 +68,7 @@ def gemini_chat():
             if st.button('Delete this Chat'):
                 if st.session_state.current_time in past_chats:
                     del past_chats[st.session_state.current_time]
-                    joblib.dump(past_chats, '../data/past_chats_list')
+                    joblib.dump(past_chats, 'Streamlit/data/past_chats_list')
                 if os.path.exists(f'data/{st.session_state.current_time}-st_messages'):
                     os.remove(f'data/{st.session_state.current_time}-st_messages')
                 if os.path.exists(f'data/{st.session_state.current_time}-gemini_messages'):
@@ -86,7 +86,7 @@ def gemini_chat():
                     if os.path.exists(f'data/{chat_id}-gemini_messages'):
                         os.remove(f'data/{chat_id}-gemini_messages')
                 past_chats.clear()
-                joblib.dump(past_chats, '../data/past_chats_list')
+                joblib.dump(past_chats, 'Streamlit/data/past_chats_list')
                 st.session_state.messages = []
                 st.session_state.gemini_history = []
                 st.session_state.current_time = None
@@ -97,10 +97,10 @@ def gemini_chat():
     # Load chat history if available
     try:
         st.session_state.messages = joblib.load(
-            f'data/{st.session_state.current_time}-st_messages'
+            f'Streamlit/data/{st.session_state.current_time}-st_messages'
         )
         st.session_state.gemini_history = joblib.load(
-            f'data/{st.session_state.current_time}-gemini_messages'
+            f'Streamlit/data/{st.session_state.current_time}-gemini_messages'
         )
     except FileNotFoundError:
         st.session_state.messages = []
@@ -173,9 +173,9 @@ def gemini_chat():
         # Save chat history to files
         joblib.dump(
             st.session_state.messages,
-            f'data/{st.session_state.current_time}-st_messages',
+            f'Streamlit/data/{st.session_state.current_time}-st_messages',
         )
         joblib.dump(
             st.session_state.gemini_history,
-            f'data/{st.session_state.current_time}-gemini_messages',
+            f'Streamlit/data/{st.session_state.current_time}-gemini_messages',
         )
